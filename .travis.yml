@@ -1,0 +1,46 @@
+language: python
+services:
+  - docker
+# run py38 and lint as separate CI processes
+matrix:
+  include:
+    - python: 3.8
+      dist: xenial
+      env: TOXENV=py38
+    - python: 3.8
+      dist: xenial
+      env: TOXENV=lint
+
+# install tox, codecov and mosquitto
+install:
+  - pip install --upgrade pip
+  - pip install codecov tox
+  - docker pull toke/mosquitto
+  - docker pull quay.io/coreos/etcd
+# command to run tests
+script:
+  # run mosquitto container
+  - >
+    docker run
+    --detach
+    --name=mosquittoc
+    --publish 1883:1883
+    --network=host
+    toke/mosquitto
+  # run ETCD container
+  - >
+    docker run
+    --detach
+    --name=etcdc
+    --network=host
+    quay.io/coreos/etcd
+    /usr/local/bin/etcd
+    --data-dir=/etcd-data --name etcd_node
+    --initial-advertise-peer-urls http://127.0.0.1:2380 --listen-peer-urls http://0.0.0.0:2380
+    --advertise-client-urls http://127.0.0.1:2379 --listen-client-urls http://0.0.0.0:2379
+    --initial-cluster etcd_node=http://127.0.0.1:2380
+  # run tox
+  - tox
+# upload coverage report to Codecov
+after_script:
+  - codecov --token=c50e2e84-7c1e-4fca-be9c-0528adcac0ed
