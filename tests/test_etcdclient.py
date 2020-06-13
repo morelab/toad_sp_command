@@ -3,7 +3,7 @@ import pytest
 import uuid
 
 from tests import ETCD_HOST, ETCD_PORT, ETCD_KEY
-from toad_sp_controller import etcdclient
+from toad_sp_command import etcdclient
 
 
 class TmpClient(etcd.Client):

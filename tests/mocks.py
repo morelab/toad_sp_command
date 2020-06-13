@@ -1,7 +1,7 @@
 import asyncio
 from json import dumps, loads, JSONDecodeError
 
-from toad_sp_controller import smartplug
+from toad_sp_command import smartplug
 
 
 class SmartPlugMock:

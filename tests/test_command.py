@@ -1,10 +1,10 @@
 import json
 
-from toad_sp_controller import command
+from toad_sp_command import command, protocol
 
 
 def test_parse_message():
-    topic = "/in/sp_command/"
+    topic = "command/sp_command"
     payload = json.dumps(
         {
             "subtopics": ["w.r3.c4", "w.r3.c5", "row/1", "column/2"],
@@ -18,4 +18,4 @@ def test_parse_message():
     }
     targets, status, err = command.parse_message(topic, payload, ips)
     print(f"Targets:\t{targets}\nStatus:\t{status}\nError:\t{err}")
-    assert err == "" and status == 1 and len(targets) == 3
+    assert err == "" and status and len(targets) == 3

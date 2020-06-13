@@ -7,7 +7,7 @@ import json
 from struct import pack
 from typing import Any, Tuple
 
-from toad_sp_controller import logger
+from toad_sp_command import logger
 
 
 class DecryptionException(Exception):

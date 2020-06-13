@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import asyncio
-from toad_sp_controller import config, command
+from toad_sp_command import config, command
 
 
 if __name__ == "__main__":

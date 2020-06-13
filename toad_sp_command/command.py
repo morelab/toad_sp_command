@@ -1,12 +1,12 @@
 import asyncio
 import json
-import time
 from typing import Tuple, List, Dict
 
 from gmqtt import Client as MQTTClient
 
-from toad_sp_controller import config, etcdclient, logger, protocol, smartplug
-from toad_sp_controller.config import COLUMNS_POR_ROW, ROWS_PER_COLUMN
+from toad_sp_command import config, etcdclient, logger,smartplug
+from toad_sp_command.config import COLUMNS_POR_ROW, ROWS_PER_COLUMN
+from toad_sp_command.protocol import SHORT_TOPIC, TOPIC
 
 STOP = asyncio.Event()
 
@@ -16,11 +16,11 @@ cached_ips: Dict[str, str] = {}
 
 def on_connect(client, flags, rc, properties):
     print("Connected")
-    client.subscribe(protocol.TOPIC, qos=0)
+    client.subscribe(TOPIC, qos=0)
 
 
 def on_message(client, topic, payload, qos, properties):
-    print(f"RECV MSG with topic: '{topic}', payload: '{payload}'")
+    logger.log_info(f"[MQTT] Received: '{topic}', payload: '{payload}'")
     targets, status, err = parse_message(topic, payload, cached_ips)
     logger.log_error_verbose(f"Targets: [{', '.join(targets)}]")
     success, failed = [], []
@@ -53,10 +53,10 @@ def parse_message(
     :param ips: ID->IP map
     :return: targets, status, error
     """
-    if not topic.startswith(MQTT_TOPIC):
-        return [], False, f"Invalid topic: {topic}, it should start with {MQTT_TOPIC}"
+    if not topic.startswith(SHORT_TOPIC):
+        return [], False, f"Invalid topic: {topic}, it should start with {SHORT_TOPIC}"
     # remove MQTT_TOPIC from the topic to get the query
-    n = len(MQTT_TOPIC) - 1
+    n = len(SHORT_TOPIC)
     query = topic[n:]
     if query != "" and query[0] == "/":
         query = query[1:]

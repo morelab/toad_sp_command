@@ -1,7 +1,7 @@
 import pytest
 
 from tests import mocks
-from toad_sp_controller import smartplug
+from toad_sp_command import smartplug
 
 
 @pytest.fixture

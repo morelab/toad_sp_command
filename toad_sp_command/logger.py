@@ -1,6 +1,6 @@
 import logging
 
-from toad_sp_controller.config import LOGGER_VERBOSE
+from toad_sp_command.config import LOGGER_VERBOSE
 
 verbose = LOGGER_VERBOSE
 
