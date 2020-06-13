@@ -5,8 +5,8 @@ from typing import Tuple, List, Dict
 
 from gmqtt import Client as MQTTClient
 
-from toad_sp_controller import config, etcdclient, logger, smartplug
-from toad_sp_controller.config import MQTT_TOPIC, COLUMNS_POR_ROW, ROWS_PER_COLUMN
+from toad_sp_controller import config, etcdclient, logger, protocol, smartplug
+from toad_sp_controller.config import COLUMNS_POR_ROW, ROWS_PER_COLUMN
 
 STOP = asyncio.Event()
 
@@ -16,7 +16,7 @@ cached_ips: Dict[str, str] = {}
 
 def on_connect(client, flags, rc, properties):
     print("Connected")
-    client.subscribe("TEST/#", qos=0)
+    client.subscribe(protocol.TOPIC, qos=0)
 
 
 def on_message(client, topic, payload, qos, properties):
@@ -133,8 +133,6 @@ async def main(broker_host):
     client.on_subscribe = on_subscribe
 
     await client.connect(broker_host)
-
-    client.publish("TEST/TIME", str(time.time()), qos=1)
 
     while True:
         if STOP.is_set():

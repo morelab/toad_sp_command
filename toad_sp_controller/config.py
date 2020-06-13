@@ -26,7 +26,6 @@ LOGGER_VERBOSE = _logger_config.getboolean("verbose")
 MQTT_BROKER_HOST = _mqtt_config.get("broker_host")
 MQTT_BROKER_PORT = int(_mqtt_config.get("broker_port"))
 MQTT_RESPONSE_TIMEOUT = int(_mqtt_config.get("response_timeout"))
-MQTT_TOPIC = _mqtt_config.get("topic")
 # Workspace
 COLUMNS_POR_ROW = int(_workspace_config.get("columns_per_row"))
 ROWS_PER_COLUMN = int(_workspace_config.get("rows_per_column"))

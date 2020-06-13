@@ -34,7 +34,7 @@ class SmartPlugMock:
     async def handle_command(
         reader: asyncio.streams.StreamReader, writer: asyncio.streams.StreamWriter
     ) -> None:
-        encrypted_cmd = await reader.read()
+        encrypted_cmd = await reader.read(2048)
         try:
             # decrypt and load message to raise exception if it is invalid
             cmd = loads(smartplug.decrypt(encrypted_cmd).decode("utf-8"))

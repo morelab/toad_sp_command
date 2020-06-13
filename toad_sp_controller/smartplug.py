@@ -73,9 +73,8 @@ async def send_command(cmd: dict, ip: str, port: int = 9999) -> Tuple[bool, Any]
     try:
         reader, writer = await asyncio.open_connection(ip, port)
         writer.write(encrypt(json.dumps(cmd).encode("utf-8")))
-        writer.write_eof()
         await writer.drain()
-        data = await reader.read()
+        data = await reader.read(2048)
         writer.close()
         await writer.wait_closed()
         if len(data) == 0:
