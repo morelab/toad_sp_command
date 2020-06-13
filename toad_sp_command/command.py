@@ -121,10 +121,20 @@ def ask_exit(*args):
     STOP.set()
 
 
+def update_ip_cache():
+    global cached_ips
+    cached_ips = etcdclient.get_cached_ips(
+        config.ETCD_HOST, config.ETCD_PORT, config.ETCD_KEY
+    )
+    logger.log_info_verbose(f"Updated IP cache:\n\t" + '\n\t'.join(
+            f"{sp_id}: {ip}" for sp_id, ip in cached_ips.items()))
+
+
 async def main(broker_host):
 
     global cached_ips
 
+    update_ip_cache()
     client = MQTTClient("client-id")
 
     client.on_connect = on_connect
@@ -135,10 +145,11 @@ async def main(broker_host):
     await client.connect(broker_host)
 
     while True:
+        try:
+            update_ip_cache()
+        except Exception:
+            pass
         if STOP.is_set():
             await client.disconnect()
             exit(0)
-        cached_ips = etcdclient.get_cached_ips(
-            config.ETCD_HOST, config.ETCD_PORT, config.ETCD_KEY
-        )
         await asyncio.sleep(config.SLEEP_TIME)
