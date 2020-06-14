@@ -100,13 +100,13 @@ def parse_message(
     for topic in topics:
         if "row" in topic:
             row = topic.split("/")[-1]
-            for sp in [f"sp_r{row}.c{x}" for x in range(COLUMNS_POR_ROW)]:
+            for sp in [f"sp_w.r{row}.c{x}" for x in range(COLUMNS_POR_ROW)]:
                 target = ips.get(sp)
                 if target:
                     targets.append(target)
         elif "column" in topic:
             column = topic.split("/")[-1]
-            for sp in [f"sp_r{x}.c{column}" for x in range(ROWS_PER_COLUMN)]:
+            for sp in [f"sp_w.r{x}.c{column}" for x in range(ROWS_PER_COLUMN)]:
                 target = ips.get(sp)
                 if target:
                     targets.append(target)
