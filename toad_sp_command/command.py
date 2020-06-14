@@ -4,7 +4,7 @@ from typing import Tuple, List, Dict
 
 from gmqtt import Client as MQTTClient
 
-from toad_sp_command import config, etcdclient, logger,smartplug
+from toad_sp_command import config, etcdclient, logger, smartplug
 from toad_sp_command.config import COLUMNS_POR_ROW, ROWS_PER_COLUMN
 from toad_sp_command.protocol import SHORT_TOPIC, TOPIC
 
@@ -100,13 +100,13 @@ def parse_message(
     for topic in topics:
         if "row" in topic:
             row = topic.split("/")[-1]
-            for sp in [f"w.r{row}.c{x}" for x in range(COLUMNS_POR_ROW)]:
+            for sp in [f"sp_r{row}.c{x}" for x in range(COLUMNS_POR_ROW)]:
                 target = ips.get(sp)
                 if target:
                     targets.append(target)
         elif "column" in topic:
             column = topic.split("/")[-1]
-            for sp in [f"w.r{x}.c{column}" for x in range(ROWS_PER_COLUMN)]:
+            for sp in [f"sp_r{x}.c{column}" for x in range(ROWS_PER_COLUMN)]:
                 target = ips.get(sp)
                 if target:
                     targets.append(target)
@@ -126,8 +126,10 @@ def update_ip_cache():
     cached_ips = etcdclient.get_cached_ips(
         config.ETCD_HOST, config.ETCD_PORT, config.ETCD_KEY
     )
-    logger.log_info_verbose(f"Updated IP cache:\n\t" + '\n\t'.join(
-            f"{sp_id}: {ip}" for sp_id, ip in cached_ips.items()))
+    logger.log_info_verbose(
+        f"Updated IP cache:\n\t"
+        + "\n\t".join(f"{sp_id}: {ip}" for sp_id, ip in cached_ips.items())
+    )
 
 
 async def main(broker_host):
