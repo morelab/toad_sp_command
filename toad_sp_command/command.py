@@ -19,6 +19,14 @@ def on_connect(client, flags, rc, properties):
     client.subscribe(TOPIC, qos=0)
 
 
+async def set_status_command(status, target, ok_dict, err_dict):
+    ok, err = await smartplug.set_status(status, target)
+    if ok:
+        ok_dict[target] = True
+    else:
+        err_dict[target] = err
+
+
 async def on_message(client, topic, payload, qos, properties):
     logger.log_info(f"[MQTT] Received: '{topic}', payload: '{payload}'")
     from json import loads
@@ -26,20 +34,27 @@ async def on_message(client, topic, payload, qos, properties):
     targets, status, err = parse_message(topic, payload, cached_ips)
     logger.log_error_verbose(
         f"Targets: [{', '.join(targets)}]\nStatus: {status}\nError: {err}")
-    success, failed = [], {}
-    for target in targets:
-        ok, err = await smartplug.set_status(status, target)
-        if ok:
-            success.append(target)
-        else:
-            failed[target] = err
-    logger.log_info_verbose(f"Command OK for targets: [{', '.join(success)}]")
-    logger.log_info_verbose(f"Command ERR for targets: [{', '.join(failed.keys())}]")
+    success, failed = {}, {}
+    # Commands is a list of awaitables that will be waited by wait_for
+    commands = [set_status_command(status, t, success, failed) for t in targets]
+    try:
+        # gather waits for the tasks and wait_for sets a timeout
+        await asyncio.wait_for(asyncio.gather(*commands), config.COMMAND_TIMEOUT)
+    except asyncio.TimeoutError:
+        # mark targets that haven't responded yet as timeouts
+        for target in targets:
+            if target not in success and target not in failed:
+                failed[target] = "Timeout"
+
+    logger.log_info_verbose(
+        f"Command OK for targets: [{', '.join(list(success.keys()))}]")
+    logger.log_info_verbose(
+        f"Command ERR for targets: [{', '.join(list(failed.keys()))}]")
     client.publish(
         response_topic,
         {
             "data": {
-                "successful": success
+                "successful": list(success.keys())
             },
             protocol.ERROR_FIELD: failed
         }

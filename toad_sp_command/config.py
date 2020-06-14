@@ -16,6 +16,7 @@ _workspace_config = _config["WORKSPACE"]
 # Configuration variables
 # COMMAND
 SLEEP_TIME = float(_command_config.get("sleep_time"))
+COMMAND_TIMEOUT = int(_command_config.get("timeout"))
 # ETCD
 ETCD_HOST = _etcd_config.get("host")
 ETCD_PORT = int(_etcd_config.get("port"))
