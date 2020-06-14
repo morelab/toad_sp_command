@@ -1,2 +1,5 @@
+DATA_FIELD = "data"
+ERROR_FIELD = "error"
+RESPONSE_ID_FIELD = "response-id"
 SHORT_TOPIC = "command/sp_command"
 TOPIC = f"{SHORT_TOPIC}/#"

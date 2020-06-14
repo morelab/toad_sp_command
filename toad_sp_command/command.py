@@ -4,7 +4,7 @@ from typing import Tuple, List, Dict
 
 from gmqtt import Client as MQTTClient
 
-from toad_sp_command import config, etcdclient, logger, smartplug
+from toad_sp_command import config, etcdclient, logger, protocol, smartplug
 from toad_sp_command.config import COLUMNS_POR_ROW, ROWS_PER_COLUMN
 from toad_sp_command.protocol import SHORT_TOPIC, TOPIC
 
@@ -19,20 +19,31 @@ def on_connect(client, flags, rc, properties):
     client.subscribe(TOPIC, qos=0)
 
 
-def on_message(client, topic, payload, qos, properties):
+async def on_message(client, topic, payload, qos, properties):
     logger.log_info(f"[MQTT] Received: '{topic}', payload: '{payload}'")
+    from json import loads
+    response_topic = loads(payload.decode())[protocol.RESPONSE_ID_FIELD]
     targets, status, err = parse_message(topic, payload, cached_ips)
-    logger.log_error_verbose(f"Targets: [{', '.join(targets)}]")
-    success, failed = [], []
+    logger.log_error_verbose(
+        f"Targets: [{', '.join(targets)}]\nStatus: {status}\nError: {err}")
+    success, failed = [], {}
     for target in targets:
-        ok, _ = smartplug.set_status(status, target)
+        ok, err = await smartplug.set_status(status, target)
         if ok:
             success.append(target)
         else:
-            failed.append(target)
+            failed[target] = err
     logger.log_info_verbose(f"Command OK for targets: [{', '.join(success)}]")
-    logger.log_info_verbose(f"Command ERR for targets: [{', '.join(failed)}]")
-
+    logger.log_info_verbose(f"Command ERR for targets: [{', '.join(failed.keys())}]")
+    client.publish(
+        response_topic,
+        {
+            "data": {
+                "successful": success
+            },
+            protocol.ERROR_FIELD: failed
+        }
+    )
 
 def on_disconnect(client, packet, exc=None):
     print("Disconnected")
@@ -65,13 +76,9 @@ def parse_message(
     except json.JSONDecodeError as err:
         return [], False, err.__str__()
 
-    data_payload = data.get("payload")
+    data_payload = data.get(protocol.DATA_FIELD)
     if data_payload is None:
-        return [], False, f"Missing payload, check the documentation for more info"
-    try:
-        data_payload = json.loads(data_payload)
-    except json.JSONDecodeError as err:
-        return [], False, err.__str__()
+        return [], False, f"Missing data fields, check the documentation for more info"
 
     status = False
     # this assignation is not yet supported by flake8 so it nees to be two steps
@@ -97,6 +104,7 @@ def parse_message(
         topics = [f"{query}{st}" for st in subtopics]
 
     targets = []
+
     for topic in topics:
         if "row" in topic:
             row = topic.split("/")[-1]
