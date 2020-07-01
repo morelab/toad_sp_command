@@ -30,7 +30,7 @@ async def set_status_command(status, target, ok_dict, err_dict):
 async def on_message(client, topic, payload, qos, properties):
     logger.log_info(f"[MQTT] Received: '{topic}', payload: '{payload}'")
     from json import loads
-    response_topic = loads(payload.decode())[protocol.RESPONSE_ID_FIELD]
+    response_topic = loads(payload.decode()).get(protocol.RESPONSE_ID_FIELD)
     targets, status, err = parse_message(topic, payload, cached_ips)
     logger.log_error_verbose(
         f"Targets: [{', '.join(targets)}]\nStatus: {status}\nError: {err}")
@@ -50,15 +50,17 @@ async def on_message(client, topic, payload, qos, properties):
         f"Command OK for targets: [{', '.join(list(success.keys()))}]")
     logger.log_info_verbose(
         f"Command ERR for targets: [{', '.join(list(failed.keys()))}]")
-    client.publish(
-        response_topic,
-        {
-            "data": {
-                "successful": list(success.keys())
-            },
-            protocol.ERROR_FIELD: failed
-        }
-    )
+    if response_topic:
+        client.publish(
+            response_topic,
+            {
+                "data": {
+                    "successful": list(success.keys())
+                },
+                protocol.ERROR_FIELD: failed
+            }
+        )
+
 
 def on_disconnect(client, packet, exc=None):
     print("Disconnected")
