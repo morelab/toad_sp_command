@@ -100,7 +100,7 @@ def parse_message(
     status = False
     # this assignation is not yet supported by flake8 so it nees to be two steps
     # if status_value := data_payload.get("status"):
-    status_value = data_payload.get("status")
+    status_value = json.loads(data_payload).get("status")
     if status_value:
         try:
             status_value = int(status_value)
